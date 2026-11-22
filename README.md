@@ -103,13 +103,15 @@ In an emulated VM, the redirect cost matched FreeBSD's own `SIGSYS` delivery: th
 
 The FreeBSD port of gVisor's Sentry lives in a fork: [`moterech/gvisor`, branch `freebsd`](https://github.com/moterech/gvisor/tree/freebsd). It is based on upstream's `go` branch at `release-20261116.0`.
 
-**Done:** the host-facing layer builds and runs on FreeBSD 15.1 amd64.
-- kqueue replaces epoll; `_umtx_op` replaces futex; `shm_open2(SHM_ANON)` replaces memfd.
-- `safecopy`'s fault handler uses FreeBSD `ucontext` offsets.
-- Host errnos are translated from FreeBSD numbering, and the socket and file I/O paths are ported.
-- `test/freebsd/porttest` runs these primitives against a real FreeBSD kernel.
+**Done:**
+- **Host layer:** kqueue replaces epoll, `_umtx_op` replaces futex, and `shm_open2(SHM_ANON)` replaces memfd. `safecopy`'s fault handler uses FreeBSD `ucontext` offsets. Host errnos are translated from FreeBSD numbering, and the socket and file I/O paths are ported.
+- **File layer:**
+  - the Sentry's gofer and host filesystems;
+  - the lisafs protocol;
+  - the Gofer server itself. It uses `statx` emulated on `fstatat`, `O_EMPTY_PATH`/`AT_EMPTY_PATH` instead of `/proc/self/fd`, and a no-symlink component walk instead of `openat2`.
+- **Tests:** `test/freebsd/porttest` plus FreeBSD-only tests in the gofer packages run these primitives against a real FreeBSD kernel.
 
-**Not done yet:** the file layer (Gofer/lisafs) and the `bsdtrap` platform that connects the Sentry to `gsb.ko`.
+**Not done yet:** the `bsdtrap` platform that connects the Sentry to `gsb.ko`, and a launcher. Host TTYs are imported as plain character devices until a termios translation exists.
 
 ## Known limitations
 
