@@ -1,0 +1,27 @@
+# Lima VM for the gVisor-on-FreeBSD PoC.
+# FreeBSD 15.1-RELEASE amd64, emulated with QEMU TCG on Apple Silicon.
+#
+# From the repository root:
+#   limactl create --name=gsb-dev --mount-only "$PWD:w" lima/gsb-dev.yaml
+#   limactl start gsb-dev
+#   limactl shell gsb-dev sudo sh "$PWD/lima/setup.sh"
+#
+# NOTE: TCG emulation is for development and functional/security testing only.
+# Performance numbers must come from real amd64 hardware.
+minimumLimaVersion: 2.1.0
+
+base:
+- template:_images/freebsd-15
+
+vmType: qemu
+arch: x86_64
+vmOpts:
+  qemu:
+    # "max" exposes XSAVE/AVX so FPU-state save/restore paths get exercised.
+    cpuType:
+      x86_64: "max"
+cpus: 4
+memory: 8GiB
+disk: 60GiB
+
+# The repository is mounted with --mount-only (see above).

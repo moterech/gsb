@@ -1,0 +1,9 @@
+# Build outputs (builds normally use MAKEOBJDIR outside the tree)
+*.ko
+*.o
+*.tmp
+/kmod/gsb/tests/gsbstub
+/spike/spike_stub
+/spike/sentry
+/spike/native_sigsys
+.DS_Store
