@@ -319,6 +319,8 @@ gsb_pass_init(void)
 		SYS_sigaltstack,
 		SYS_pdfork,		/* stub template spawns address spaces */
 		SYS_cap_enter,
+		SYS_recvmsg,		/* receive fds to map (SCM_RIGHTS) */
+		SYS_close,
 	};
 	u_int i;
 

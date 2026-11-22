@@ -36,7 +36,7 @@ Target: FreeBSD 15.1-RELEASE, amd64.
   1. The thread is in *stub mode*. This is a per-thread kernel flag that only a passthrough `sigreturn` clears (the only way into app code) and only signal delivery sets.
   2. `%rip` is inside the stub's text segment.
   3. The instruction is `syscall` (`0f 05`).
-  4. The call is one of 15 allowlisted calls and passes argument checks. For example, `mmap`/`mprotect`/`munmap` cannot touch stub text, and signal handlers and thread entry points must be stub code.
+  4. The call is one of 17 allowlisted calls and passes argument checks. For example, `mmap`/`mprotect`/`munmap` cannot touch stub text, and signal handlers and thread entry points must be stub code.
 
   App code always runs outside stub mode, so jumping into the stub's `syscall` instruction does not help.
 - **Linux register semantics.** Before building the signal frame, the module restores `r10` (the 4th argument), `rcx=rip` and `r11=rflags`. FreeBSD's syscall entry doesn't save these the way Linux expects.
@@ -111,7 +111,9 @@ The FreeBSD port of gVisor's Sentry lives in a fork: [`moterech/gvisor`, branch 
   - the Gofer server itself. It uses `statx` emulated on `fstatat`, `O_EMPTY_PATH`/`AT_EMPTY_PATH` instead of `/proc/self/fd`, and a no-symlink component walk instead of `openat2`.
 - **Tests:** `test/freebsd/porttest` plus FreeBSD-only tests in the gofer packages run these primitives against a real FreeBSD kernel.
 
-**Not done yet:** the `bsdtrap` platform that connects the Sentry to `gsb.ko`, and a launcher. Host TTYs are imported as plain character devices until a termios translation exists.
+- **Platform:** `bsdtrap`, the counterpart of gVisor's systrap. It drives app threads in stub processes under `gsb.ko`, converts FreeBSD `mcontext`/XSAVE state to and from Linux registers, and derives fault access types from the page-fault error code. Its tests run hand-assembled Linux code through the real kernel module. One syscall round trip takes about 36 µs in the emulated dev VM, about 1.2× FreeBSD's own SIGSYS delivery cost there.
+
+**Not done yet:** a Sentry entry point and launcher that boot a full Linux program, and Capsicum/jail confinement. Host TTYs are imported as plain character devices until a termios translation exists.
 
 ## Known limitations
 
