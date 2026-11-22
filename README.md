@@ -10,7 +10,7 @@ The repository contains:
 - **`spike/`**: a minimal C "Sentry" that serves a Linux app's syscalls over shared memory, with latency measurements.
 - **`lima/`**: a FreeBSD 15.1 amd64 development VM for macOS.
 
-It is not a sandbox you can use yet. There is no gVisor Sentry port here, only the kernel-side mechanism and a minimal user-space counterpart that show the design works.
+It is not a sandbox you can use yet. This repository holds the kernel-side mechanism and a minimal user-space counterpart that show the design works. The port of gVisor's Sentry itself is in progress separately (see [Sentry port](#sentry-port)).
 
 Target: FreeBSD 15.1-RELEASE, amd64.
 
@@ -98,6 +98,18 @@ With `gsb.ko` loaded:
 - the same round trip with sleep/wake only.
 
 In an emulated VM, the redirect cost matched FreeBSD's own `SIGSYS` delivery: the module adds no measurable overhead. The shared-memory hand-off added about 5% when both sides spin briefly before sleeping.
+
+## Sentry port
+
+The FreeBSD port of gVisor's Sentry lives in a fork: [`moterech/gvisor`, branch `freebsd`](https://github.com/moterech/gvisor/tree/freebsd). It is based on upstream's `go` branch at `release-20261116.0`.
+
+**Done:** the host-facing layer builds and runs on FreeBSD 15.1 amd64.
+- kqueue replaces epoll; `_umtx_op` replaces futex; `shm_open2(SHM_ANON)` replaces memfd.
+- `safecopy`'s fault handler uses FreeBSD `ucontext` offsets.
+- Host errnos are translated from FreeBSD numbering, and the socket and file I/O paths are ported.
+- `test/freebsd/porttest` runs these primitives against a real FreeBSD kernel.
+
+**Not done yet:** the file layer (Gofer/lisafs) and the `bsdtrap` platform that connects the Sentry to `gsb.ko`.
 
 ## Known limitations
 
