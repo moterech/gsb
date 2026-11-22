@@ -113,7 +113,21 @@ The FreeBSD port of gVisor's Sentry lives in a fork: [`moterech/gvisor`, branch 
 
 - **Platform:** `bsdtrap`, the counterpart of gVisor's systrap. It drives app threads in stub processes under `gsb.ko`, converts FreeBSD `mcontext`/XSAVE state to and from Linux registers, and derives fault access types from the page-fault error code. Its tests run hand-assembled Linux code through the real kernel module. One syscall round trip takes about 36 µs in the emulated dev VM, about 1.2× FreeBSD's own SIGSYS delivery cost there.
 
-**Not done yet:** a Sentry entry point and launcher that boot a full Linux program, and Capsicum/jail confinement. Host TTYs are imported as plain character devices until a termios translation exists.
+- **First light:** `cmd/gsb-sentry` boots a minimal Sentry on `bsdtrap` and runs an unmodified, static Linux/amd64 Go binary to completion. That covers runtime start-up, threads, futexes, signals, `getpid` and `write`. In that run, `gsb.ko` redirected all 613 app syscalls, and DTrace showed the stub reaching only allowlisted host calls.
+
+  ```sh
+  # on the host (gvisor fork, branch freebsd)
+  GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build -ldflags=-checklinkname=0 ./cmd/gsb-sentry
+  # in the VM, with gsb.ko loaded and the stub installed (pkg/sentry/platform/bsdtrap/stub)
+  ./gsb-sentry ./hello-linux     # a GOOS=linux static binary
+  ```
+
+**Not done yet:**
+- **Root filesystem:** a lisafs Gofer root, so dynamically linked binaries (busybox, python3) can load their libraries.
+- **Confinement:** Capsicum and jail.
+- **Launcher:** a proper launcher.
+
+Host TTYs are still imported as plain character devices until a termios translation exists.
 
 ## Known limitations
 
